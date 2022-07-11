@@ -1,0 +1,96 @@
+{
+	"BUILD_DIR" : "/home/cvx/catkin_ws/build/pxrf/main_autogen",
+	"CMAKE_BINARY_DIR" : "/home/cvx/catkin_ws/build",
+	"CMAKE_CURRENT_BINARY_DIR" : "/home/cvx/catkin_ws/build/pxrf",
+	"CMAKE_CURRENT_SOURCE_DIR" : "/home/cvx/catkin_ws/src/pxrf",
+	"CMAKE_EXECUTABLE" : "/usr/bin/cmake",
+	"CMAKE_SOURCE_DIR" : "/home/cvx/catkin_ws/src",
+	"HEADERS" : 
+	[
+		[
+			"/home/cvx/catkin_ws/src/pxrf/src/msgfactory.h",
+			"Mu",
+			"UVLADIE3JM/moc_msgfactory.cpp"
+		],
+		[
+			"/home/cvx/catkin_ws/src/pxrf/src/vantacommunicator.h",
+			"Mu",
+			"UVLADIE3JM/moc_vantacommunicator.cpp"
+		],
+		[
+			"/home/cvx/catkin_ws/src/pxrf/src/websocketclient.h",
+			"Mu",
+			"UVLADIE3JM/moc_websocketclient.cpp"
+		]
+	],
+	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
+	"INCLUDE_DIR" : "/home/cvx/catkin_ws/build/pxrf/main_autogen/include",
+	"MOC_COMPILATION_FILE" : "/home/cvx/catkin_ws/build/pxrf/main_autogen/mocs_compilation.cpp",
+	"MOC_DEFINITIONS" : 
+	[
+		"QT_CORE_LIB",
+		"QT_NETWORK_LIB",
+		"QT_NO_DEBUG",
+		"QT_WEBSOCKETS_LIB",
+		"ROSCONSOLE_BACKEND_LOG4CXX",
+		"ROS_BUILD_SHARED_LIBS=1",
+		"ROS_PACKAGE_NAME=\"pxrf\""
+	],
+	"MOC_DEPEND_FILTERS" : 
+	[
+		[
+			"Q_PLUGIN_METADATA",
+			"[\n][ \t]*Q_PLUGIN_METADATA[ \t]*\\([^\\)]*FILE[ \t]*\"([^\"]+)\""
+		]
+	],
+	"MOC_INCLUDES" : 
+	[
+		"/home/cvx/catkin_ws/build/pxrf",
+		"/home/cvx/catkin_ws/src/pxrf",
+		"/home/cvx/catkin_ws/devel/include",
+		"/home/cvx/catkin_ws/src/pxrf/include",
+		"/opt/ros/noetic/include",
+		"/opt/ros/noetic/include/xmlrpcpp",
+		"/usr/include/x86_64-linux-gnu/qt5",
+		"/usr/include/x86_64-linux-gnu/qt5/QtCore",
+		"/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++",
+		"/usr/include/x86_64-linux-gnu/qt5/QtWebSockets",
+		"/usr/include/x86_64-linux-gnu/qt5/QtNetwork",
+		"/usr/include",
+		"/usr/include/c++/9",
+		"/usr/include/x86_64-linux-gnu/c++/9",
+		"/usr/include/c++/9/backward",
+		"/usr/lib/gcc/x86_64-linux-gnu/9/include",
+		"/usr/local/include",
+		"/usr/include/x86_64-linux-gnu"
+	],
+	"MOC_MACRO_NAMES" : [ "Q_OBJECT", "Q_GADGET", "Q_NAMESPACE" ],
+	"MOC_OPTIONS" : [],
+	"MOC_PATH_PREFIX" : true,
+	"MOC_PREDEFS_CMD" : 
+	[
+		"/usr/bin/c++",
+		"-dM",
+		"-E",
+		"-c",
+		"/usr/share/cmake-3.16/Modules/CMakeCXXCompilerABI.cpp"
+	],
+	"MOC_PREDEFS_FILE" : "/home/cvx/catkin_ws/build/pxrf/main_autogen/moc_predefs.h",
+	"MOC_RELAXED_MODE" : false,
+	"MOC_SKIP" : [],
+	"MULTI_CONFIG" : false,
+	"PARALLEL" : 4,
+	"PARSE_CACHE_FILE" : "/home/cvx/catkin_ws/build/pxrf/CMakeFiles/main_autogen.dir/ParseCache.txt",
+	"QT_MOC_EXECUTABLE" : "/usr/lib/qt5/bin/moc",
+	"QT_UIC_EXECUTABLE" : "",
+	"QT_VERSION_MAJOR" : 5,
+	"SETTINGS_FILE" : "/home/cvx/catkin_ws/build/pxrf/CMakeFiles/main_autogen.dir/AutogenUsed.txt",
+	"SOURCES" : 
+	[
+		[ "/home/cvx/catkin_ws/src/pxrf/src/main.cpp", "Mu" ],
+		[ "/home/cvx/catkin_ws/src/pxrf/src/msgfactory.cpp", "Mu" ],
+		[ "/home/cvx/catkin_ws/src/pxrf/src/vantacommunicator.cpp", "Mu" ],
+		[ "/home/cvx/catkin_ws/src/pxrf/src/websocketclient.cpp", "Mu" ]
+	],
+	"VERBOSITY" : 0
+}

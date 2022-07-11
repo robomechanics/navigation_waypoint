@@ -1,0 +1,8 @@
+prefix=/home/cvx/catkin_ws/install
+
+Name: kraton
+Description: Description of kraton
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
