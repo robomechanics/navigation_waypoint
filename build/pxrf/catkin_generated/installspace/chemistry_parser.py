@@ -5,7 +5,10 @@ import time
 import rospy
 from std_msgs.msg import String
 from pxrf.msg import PxrfMsg
+import sys
+sys.path.insert(0,"/home/cvx/catkin_ws/src/pxrf/scripts")
 from sensor_msgs.msg import NavSatFix
+from plot import generate_plot
 
 class CHEMISTRY_PARSER:
     def __init__(self):
@@ -35,9 +38,9 @@ class CHEMISTRY_PARSER:
             print("Test complete")
             
     def gps(self,msg):
-        if (msg.data.longitude != None and msg.data.latitude != None):
-            self.longitude = msg.data.longitude
-            self.latitude = msg.data.latitude
+        if (msg.longitude != None and msg.latitude != None):
+            self.longitude = msg.longitude
+            self.latitude = msg.latitude
 	
     def writeData(self, msg):
         self.dailyId = msg.dailyId
@@ -85,6 +88,8 @@ class CHEMISTRY_PARSER:
                 writer.writerow(error)
                 print("Chemistry parsing complete")
                 self.testStopped = False
+            time.sleep(2)
+            generate_plot()
 
 if __name__ == '__main__':
     CHEMISTRY_PARSER()

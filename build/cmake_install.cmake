@@ -131,9 +131,13 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/home/cvx/catkin_ws/build/gtest/cmake_install.cmake")
+  include("/home/cvx/catkin_ws/build/microstrain_inertial/microstrain_inertial_msgs/cmake_install.cmake")
   include("/home/cvx/catkin_ws/build/gps_navigation-main/cmake_install.cmake")
   include("/home/cvx/catkin_ws/build/kraton/cmake_install.cmake")
   include("/home/cvx/catkin_ws/build/pxrf/cmake_install.cmake")
+  include("/home/cvx/catkin_ws/build/microstrain_inertial/microstrain_inertial_examples/cmake_install.cmake")
+  include("/home/cvx/catkin_ws/build/microstrain_inertial/microstrain_inertial_rqt/cmake_install.cmake")
+  include("/home/cvx/catkin_ws/build/microstrain_inertial/microstrain_inertial_driver/cmake_install.cmake")
 
 endif()
 

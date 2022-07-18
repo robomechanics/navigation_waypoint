@@ -1,2 +1,2 @@
-gps_navigation-main:kraton:pxrf
+gps_navigation-main:kraton:microstrain_inertial/microstrain_inertial_driver:microstrain_inertial/microstrain_inertial_examples:microstrain_inertial/microstrain_inertial_msgs:microstrain_inertial/microstrain_inertial_rqt:pxrf
 -DCATKIN_DEVEL_PREFIX=/home/cvx/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/cvx/catkin_ws/install -G Unix Makefiles

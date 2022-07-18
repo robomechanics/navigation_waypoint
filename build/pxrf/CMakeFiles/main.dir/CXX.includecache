@@ -6,28 +6,6 @@
 
 #IncludeRegexTransform: 
 
-/home/cvx/catkin_ws/build/pxrf/main_autogen/UVLADIE3JM/moc_vantacommunicator.cpp
-src/vantacommunicator.h
-/home/cvx/catkin_ws/build/pxrf/main_autogen/UVLADIE3JM/src/vantacommunicator.h
-QtCore/qbytearray.h
--
-QtCore/qmetatype.h
--
-
-/home/cvx/catkin_ws/build/pxrf/main_autogen/UVLADIE3JM/moc_websocketclient.cpp
-src/websocketclient.h
-/home/cvx/catkin_ws/build/pxrf/main_autogen/UVLADIE3JM/src/websocketclient.h
-QtCore/qbytearray.h
--
-QtCore/qmetatype.h
--
-
-/home/cvx/catkin_ws/build/pxrf/main_autogen/mocs_compilation.cpp
-UVLADIE3JM/moc_vantacommunicator.cpp
-/home/cvx/catkin_ws/build/pxrf/main_autogen/UVLADIE3JM/moc_vantacommunicator.cpp
-UVLADIE3JM/moc_websocketclient.cpp
-/home/cvx/catkin_ws/build/pxrf/main_autogen/UVLADIE3JM/moc_websocketclient.cpp
-
 /home/cvx/catkin_ws/devel/include/pxrf/PxrfMsg.h
 string
 -
@@ -43,16 +21,6 @@ ros/builtin_message_traits.h
 -
 ros/message_operations.h
 -
-
-/home/cvx/catkin_ws/src/pxrf/src/main.cpp
-QCoreApplication
--
-vantacommunicator.h
-/home/cvx/catkin_ws/src/pxrf/src/vantacommunicator.h
-
-/home/cvx/catkin_ws/src/pxrf/src/msgfactory.cpp
-msgfactory.h
-/home/cvx/catkin_ws/src/pxrf/src/msgfactory.h
 
 /home/cvx/catkin_ws/src/pxrf/src/msgfactory.h
 iostream
@@ -87,12 +55,6 @@ std_msgs/String.h
 /home/cvx/catkin_ws/src/pxrf/src/std_msgs/String.h
 pxrf/PxrfMsg.h
 /home/cvx/catkin_ws/src/pxrf/src/pxrf/PxrfMsg.h
-
-/home/cvx/catkin_ws/src/pxrf/src/websocketclient.cpp
-websocketclient.h
-/home/cvx/catkin_ws/src/pxrf/src/websocketclient.h
-vantacommunicator.h
-/home/cvx/catkin_ws/src/pxrf/src/vantacommunicator.h
 
 /home/cvx/catkin_ws/src/pxrf/src/websocketclient.h
 QtCore/QObject

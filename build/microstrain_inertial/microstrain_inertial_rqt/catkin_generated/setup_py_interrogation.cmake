@@ -1,0 +1,7 @@
+set(microstrain_inertial_rqt_SETUP_PY_SETUP_MODULE "distutils.core")
+set(microstrain_inertial_rqt_SETUP_PY_VERSION "2.6.0")
+set(microstrain_inertial_rqt_SETUP_PY_SCRIPTS "")
+set(microstrain_inertial_rqt_SETUP_PY_PACKAGES "microstrain_inertial_rqt")
+set(microstrain_inertial_rqt_SETUP_PY_PACKAGE_DIRS "microstrain_inertial_rqt_common/src/microstrain_inertial_rqt")
+set(microstrain_inertial_rqt_SETUP_PY_MODULES "")
+set(microstrain_inertial_rqt_SETUP_PY_MODULE_DIRS "")

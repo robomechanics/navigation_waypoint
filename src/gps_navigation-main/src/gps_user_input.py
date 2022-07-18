@@ -6,7 +6,7 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtGui
+from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 import numpy as np
 import math
 from scipy.spatial.transform import Rotation as R
@@ -15,6 +15,13 @@ from geometry_msgs.msg import Point, Quaternion, Twist, TwistStamped, PoseStampe
 import pandas as pd
 import csv
 
+#testing
+lat_set = 31.845095
+lon_set = -101.988534
+zoom_set = 20
+width_set = 5
+height_set = 5
+ 
 def deg2num(lat_deg, lon_deg, zoom):
     lat_rad = math.radians(lat_deg)
     n = 2.0 ** zoom
@@ -83,27 +90,46 @@ class PolyLineROI_noHover(pg.PolyLineROI):
 
 class gps_user_input(object):
     def __init__(self):
+        def prevGoal():
+            self.changeGoal(changeDir=-1)
+        def nextGoal():
+            self.changeGoal(changeDir=1)
+        def clearHistory():
+            self.setHistory(clear = True)
+
         rospy.init_node('gps_user_input',anonymous=True)
         # load map
-        lat = rospy.get_param('~lat')
-        lon = rospy.get_param('~lon')
-        height = rospy.get_param('~height')
-        width = rospy.get_param('~width')
-        zoom = rospy.get_param('~zoom')
+        try:
+            lat = rospy.get_param('~lat')
+            lon = rospy.get_param('~lon')
+            height = rospy.get_param('~height')
+            width = rospy.get_param('~width')
+            zoom = rospy.get_param('~zoom')
+        except:
+            print("couldn't find yaml file. load parameters from the python file")
+            lat = lat_set
+            lon = lon_set
+            height = height_set
+            width = width_set
+            zoom = zoom_set
+
         self.satMap = satelliteImage(coord=(lat,lon),dim=(width,height),zoom=zoom)
         # init widget
         self.widget = pg.LayoutWidget()
         # add plot for map
         satGUI = pg.GraphicsLayoutWidget()
         self.widget.addWidget(satGUI,row=0,col=0,colspan=8)
+        satGUI.setBackground('w')
         self.p = plotWithClick()
         satGUI.addItem(self.p)
         # show satellite image
         pg.setConfigOption('imageAxisOrder', 'row-major')
         img = pg.ImageItem(self.satMap.tile)
         self.p.addItem(img)
+        self.p.showAxes(False)
         self.p.setAspectLocked()
         self.p.invertY()
+
         # add arrow to show robot
         self.robotArrow = pg.ArrowItem(headLen=40,tipAngle=30,brush='r')
         self.p.addItem(self.robotArrow)
@@ -123,44 +149,48 @@ class gps_user_input(object):
         self.historyPlot = self.p.plot(pen=pg.mkPen('g',width=3))
         self.setHistory()
         # add buttons
-        def clearHistory():
-            self.setHistory(clear=True)
-        clearHistoryBtn = QtGui.QPushButton('Clear History')
+        clearHistoryBtn = QtWidgets.QPushButton('Clear History')
         clearHistoryBtn.clicked.connect(clearHistory)
-        clearPathBtn = QtGui.QPushButton('Clear Path')
+        clearPathBtn = QtWidgets.QPushButton('Clear Path')
         clearPathBtn.clicked.connect(self.clearPath)
-        self.editPathBtn = QtGui.QPushButton('Edit Path')
+        self.editPathBtn = QtWidgets.QPushButton('Edit Path')
         self.editPathMode = False
         self.editPathBtn.clicked.connect(self.editPath)
-        loadPathFileBtn = QtGui.QPushButton('Load Path')
+        loadPathFileBtn = QtWidgets.QPushButton('Load Path')
         loadPathFileBtn.clicked.connect(self.loadPathFile)
-        savePathBtn = QtGui.QPushButton('Save Path')
+        savePathBtn = QtWidgets.QPushButton('Save Path')
         savePathBtn.clicked.connect(self.savePath)
-        self.startPauseBtn = QtGui.QPushButton('Start Nav.')
+        self.startPauseBtn = QtWidgets.QPushButton('Start Nav.')
         self.startPauseStatus = False
         self.startPauseBtn.clicked.connect(self.startPause)
-        def prevGoal():
-            self.changeGoal(changeDir=-1)
-        def nextGoal():
-            self.changeGoal(changeDir=1)
-        prevGoalBtn = QtGui.QPushButton('Prev Goal')
+        prevGoalBtn = QtWidgets.QPushButton('Prev Goal')
         prevGoalBtn.clicked.connect(prevGoal)
-        nextGoalBtn = QtGui.QPushButton('Next Goal')
+        nextGoalBtn = QtWidgets.QPushButton('Next Goal')
         nextGoalBtn.clicked.connect(nextGoal)
-        self.widget.addWidget(clearHistoryBtn,row=1,col=0)
-        self.widget.addWidget(clearPathBtn,row=1,col=1)
-        self.widget.addWidget(self.editPathBtn,row=1,col=2)
-        self.widget.addWidget(loadPathFileBtn,row=1,col=3)
-        self.widget.addWidget(savePathBtn,row=1,col=4)
-        self.widget.addWidget(self.startPauseBtn,row=1,col=4)
-        self.widget.addWidget(prevGoalBtn,row=1,col=6)
-        self.widget.addWidget(nextGoalBtn,row=1,col=7)
+        
+        #text widget
+        self.statusNav = "Normal"
+        self.statusGPS = "Connecting to GPS"
+        #self.status = pg.TextItem('')
+        #self.status.setColor(pg.Qt.QtGui.QColor("red"))
+        #self.status.setText("testing")
+        #self.widget.addWidget(self.status, row = 1, col = 1)
+        self.widget.addWidget(clearHistoryBtn,row=2,col=0)
+        self.widget.addWidget(clearPathBtn,row=2,col=1)
+        self.widget.addWidget(self.editPathBtn,row=2,col=2)
+        self.widget.addWidget(loadPathFileBtn,row=2,col=3)
+        self.widget.addWidget(savePathBtn,row=2,col=4)
+        self.widget.addWidget(self.startPauseBtn,row=2,col=4)
+        self.widget.addWidget(prevGoalBtn,row=2,col=6)
+        self.widget.addWidget(nextGoalBtn,row=2,col=7)
+        self.widget.addLabel(text = "Status: "+ self.statusNav, row = 1, col = 0, colspan = 3 )
+        self.widget.addLabel(text = "GPS: " + self.statusGPS, row = 1, col = 4, colspan = 2 )
+
         # ros sub pub
         self.odom_sub = rospy.Subscriber('/gx5/nav/odom',Odometry,self.readOdom) # plotRobotPosition
         self.navigation_sub = rospy.Subscriber('/gps_navigation/current_goal',PoseStamped,self.readNavigation) # get status of navigation controller
         self.goal_pub = rospy.Publisher('/gps_navigation/goal',PoseStamped,queue_size=5)
-    
-    # This function adds points to roi (when user is editing path)
+        # This function adds points to roi (when user is editing path)
     def addROIPoint(self,point):
         if self.editPathMode:
             points = [[handle['pos'].x(),handle['pos'].y()] for handle in self.pathRoi.handles]
@@ -313,10 +343,10 @@ class gps_user_input(object):
             self.goal_pub.publish(msg)
 
 if __name__ == '__main__':
-    app = pg.QtGui.QApplication([])
-    mw = QtGui.QMainWindow()
+    app = QtWidgets.QApplication([])
+    mw = QtWidgets.QMainWindow()
     gps_node = gps_user_input()
     mw.setCentralWidget(gps_node.widget)
     mw.show()
     if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-        QtGui.QApplication.instance().exec_()
+        QtWidgets.QApplication.instance().exec_()

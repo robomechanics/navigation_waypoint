@@ -76,6 +76,94 @@ class gps_navigation():
         cmd_msg.linear.x = self.forwardSpeed#*np.cos(yaw_diff)
         cmd_msg.angular.z = self.kp*yaw_diff
         self.cmd_pub.publish(cmd_msg)
+#to do: get the time step
 
+class PIDController():
+    def __init__(self,traj):
+        #try to get the vehicle information
+        try:
+            self.lr = rospy.get_param('~lr')
+            self.lf = rospy.get_param('~lf')
+            self.m = rospy.get_param('~m')
+            self.ca = rospy.get_param('~ca')
+            self.g = rospy.get_param('~g')
+
+        except:
+            print("couldn't find yaml file. load default parameters")
+            self.lr = 0.2
+            self.lf = 0.3
+            self.ca = 80
+            self.g  = 9.81
+            self.m = 4
+        self.error_angle_cum = 0
+        self.error_angle_prev = 0
+        self.error_dist_cum = 0
+        self.error_dist_prev = 0
+
+    def update(self, traj):
+        traj = self.traj
+        lr = self.lr
+        lf = self.lf
+        ca = self.ca
+        m = self.m
+        g = self.g
+        error_dist_cum = self.error_dist_cum
+        error_dist_prev = self.error_dist_prev
+        error_angle_cum = self.error_angle_cum
+        error_angle_prev = self.error_angle_prev
+        # PID Tuning parameters
+        P_dist = 0.8
+        I_dist = 0.6
+        D_dist = 0.2
+        P_angle = 0.6
+        I_angle = 0.6
+        D_angle = 0.4
+        V_desire = 10
+
+        #get updated states, need to be implemented
+        #dt time step
+
+        #Lateral Controller
+        error_dist = V_desire - vdot
+        error_dist_cum = error_dist * dt + error_dist_cum
+        error_dist_diff = (error_dist - error_dist_prev) / dt
+        error_dist_prev = error_dist
+        throttle = (P_dist * error_dist + I_dist * error_dist_cum + D_dist * error_dist_diff)
+
+        #Longitudal Controller
+
+        #get the next point to go = to do
+        angle_desire = np.arctan2((traj[index][1] - Y),(traj[index][0] - X))
+        error_angle = wrapTopi(angle_desire - psi)
+
+        error_angle_cum = error_angle * dt + error_angle_cum
+        error_angle_diff = (error_angle - error_angle_prev) / dt
+        error_angle_prev = error_angle
+        delta = (P_angle * error_angle + I_angle * error_angle_cum + D_angle * error_angle_diff)
+
+        return delta,throttle
+
+    def wrapTopi(angle):
+        return (angle + np.pi) % (2 * np.pi) - np.pi
+    def get_traj(filename):
+        with open(filename) as f:
+            lines = f.readlines()
+            traj = np.zeros((len(lines),2))
+            for idx, line in enumerate(lines):
+                pos = line.split(",")
+                traj[idx,0] = pos[0]
+                traj[idx,1] = pos[1]
+        return traj
+        
+    def next_node(X,Y,traj):
+        current = np.array([X,Y])
+        traj = np.asarray(traj)
+        dist = point - traj
+        squared = np.sum(dist ** 2, axis = 1)
+        minIndex = np.argmin(squared)
+        return traj[minIndex]
+
+
+        #wrap to pi function - to do
 if __name__ == '__main__':
     gps_navigation()

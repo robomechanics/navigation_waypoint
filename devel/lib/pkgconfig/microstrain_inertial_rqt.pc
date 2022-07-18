@@ -1,0 +1,8 @@
+prefix=/home/cvx/catkin_ws/devel
+
+Name: microstrain_inertial_rqt
+Description: Description of microstrain_inertial_rqt
+Version: 2.6.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: rospy tf rqt_gui rqt_gui_py std_msgs nav_msgs geometry_msgs microstrain_inertial_msgs

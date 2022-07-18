@@ -1,0 +1,8 @@
+prefix=/home/cvx/catkin_ws/install
+
+Name: microstrain_inertial_driver
+Description: Description of microstrain_inertial_driver
+Version: 2.6.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: roscpp cmake_modules tf2 tf2_ros tf2_geometry_msgs std_msgs std_srvs geometry_msgs sensor_msgs nav_msgs nmea_msgs mavros_msgs message_runtime microstrain_inertial_msgs

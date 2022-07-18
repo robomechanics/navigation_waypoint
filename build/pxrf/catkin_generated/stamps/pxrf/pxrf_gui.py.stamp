@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import time
 from tkinter import *
 import rospy
 from std_msgs.msg import String
@@ -22,7 +22,7 @@ class App:
                                              self.xoffset, self.yoffset))
         self.buttonwidth = int(self.width*0.25)
         self.buttonheight = int(self.height*0.1)
-        self.safety = Label(root, text="Operation Safety: \n 1) drive disabled if pxrf is low on the ground \n 2) Hold B to operate rake and pxrf \n 3) ", font=("Courier", 14))
+        self.safety = Label(root, text="Operation Safety: \n 1) drive disabled if pxrf is low on the ground \n 2) Hold B to operate rake and pxrf \n 3) In case of malfunction, use the emergency stop / press CTRL + C ", font=("Courier", 14))
         self.safety.place(relx = 0.5, rely = 0.05, anchor = 'center')
         
         self.pxrfLabel = Label(root, text="PXRF Test Not Running", font=("Helvetica", 24))
@@ -41,21 +41,22 @@ class App:
         self.subCTRL = rospy.Subscriber("pxrf_response", String, self.listener)
         self.gps = rospy.Subscriber("gps", NavSatFix, self.location)
         # add sleep after button press (prevent overclicks)
-        # self.rate = rospy.Rate(1)
+        self.rate = rospy.Rate(1)
 
         self.pxrfRunning = False
 
         self.pxrfProc = None
         
     def listener(self, msg):
-        print("I am here")
         if msg.data == "201":
             self.pxrfRunning = False
             self.pxrfLabel.config(text="PXRF Test Not Running")
             self.pxrfButton.config(text="Start PXRF Test")
-            generate_plot()
+           # self.rate.sleep()
+            #time.sleep(2)
+            #generate_plot()
     def location(self,msg):
-        if (msg.data.longitude != None and msg.data.latitude != None):
+        if (msg.longitude != None and msg.latitude != None):
             self.gpsLabel.config(text="GPS found")
 		     
     def startPXRF(self):
@@ -71,7 +72,8 @@ class App:
             self.pxrfRunning = False
             self.pxrfButton.config(text="Start PXRF Test")
             self.pubCTRL.publish("stop")
-            generate_plot()
+            #time.sleep(2)
+            #generate_plot()
         # self.rate.sleep()
 
 
