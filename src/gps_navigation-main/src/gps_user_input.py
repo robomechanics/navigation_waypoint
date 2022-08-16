@@ -14,14 +14,15 @@ from nav_msgs.msg import Odometry, Path
 from geometry_msgs.msg import Point, Quaternion, Twist, TwistStamped, PoseStamped, PointStamped, Vector3
 import pandas as pd
 import csv
-
+from sensor_msgs.msg import NavSatFix
+from microstrain_inertial_msgs.msg import FilterHeading
 #testing
-lat_set = 31.845095
-lon_set = -101.988534
+lat_set = 40.440980
+lon_set = -79.946319
 zoom_set = 20
 width_set = 5
 height_set = 5
- 
+gps_fidelity = 1.0
 def deg2num(lat_deg, lon_deg, zoom):
     lat_rad = math.radians(lat_deg)
     n = 2.0 ** zoom
@@ -90,6 +91,9 @@ class PolyLineROI_noHover(pg.PolyLineROI):
 
 class gps_user_input(object):
     def __init__(self):
+        self.prev_lat = 0
+        self.prev_lon = 0
+        self.prev_heading = 0
         def prevGoal():
             self.changeGoal(changeDir=-1)
         def nextGoal():
@@ -102,6 +106,8 @@ class gps_user_input(object):
         try:
             lat = rospy.get_param('~lat')
             lon = rospy.get_param('~lon')
+            self.prev_lat = lat
+            self.prev_lon = lon
             height = rospy.get_param('~height')
             width = rospy.get_param('~width')
             zoom = rospy.get_param('~zoom')
@@ -139,6 +145,7 @@ class gps_user_input(object):
         # init plot for path
         self.pathPlotPoints = []
         self.pathGPS = []
+        self.heading = 0
         self.pathPlot = self.p.plot(symbolBrush=(255,0,255))
         self.currentGoalMarker = self.p.plot(symbolBrush=(0,0,255))
         self.pathIndex = 0
@@ -160,7 +167,7 @@ class gps_user_input(object):
         loadPathFileBtn.clicked.connect(self.loadPathFile)
         savePathBtn = QtWidgets.QPushButton('Save Path')
         savePathBtn.clicked.connect(self.savePath)
-        self.startPauseBtn = QtWidgets.QPushButton('Start Nav.')
+        self.startPauseBtn = QtWidgets.QPushButton('Start Navigation')
         self.startPauseStatus = False
         self.startPauseBtn.clicked.connect(self.startPause)
         prevGoalBtn = QtWidgets.QPushButton('Prev Goal')
@@ -187,9 +194,18 @@ class gps_user_input(object):
         self.widget.addLabel(text = "GPS: " + self.statusGPS, row = 1, col = 4, colspan = 2 )
 
         # ros sub pub
-        self.odom_sub = rospy.Subscriber('/gx5/nav/odom',Odometry,self.readOdom) # plotRobotPosition
+        self.odom_sub = rospy.Subscriber('/nav/odom',Odometry,self.readOdom) # plotRobotPosition
         self.navigation_sub = rospy.Subscriber('/gps_navigation/current_goal',PoseStamped,self.readNavigation) # get status of navigation controller
         self.goal_pub = rospy.Publisher('/gps_navigation/goal',PoseStamped,queue_size=5)
+        self.location_sub = rospy.Subscriber('/nav/gnss1/fix', NavSatFix, self.location)
+        self.set_heading = rospy.Subscriber('/nav/heading', FilterHeading, self.set_heading)
+    def set_heading(self, data):
+        if abs(self.prev_heading - self.heading) < 0.5:
+            self.heading = data.heading_rad
+        else:
+            self.heading = self.prev_heading
+
+        self.prev_heading = self. heading
         # This function adds points to roi (when user is editing path)
     def addROIPoint(self,point):
         if self.editPathMode:
@@ -225,6 +241,8 @@ class gps_user_input(object):
         self.pathGPS = []
         self.pathPlot.setData(x=[],y=[])
         self.updateGoalMarker()
+        self.startPauseStatus = False
+        self.startPauseBtn.setText('start navigation')
 
     # This function turns on/off editing mode
     def editPath(self):
@@ -274,6 +292,8 @@ class gps_user_input(object):
 
     # This function starts/ pauses the navigation
     def startPause(self):
+        if (len(self.pathGPS) == 0):
+            return
         self.startPauseStatus = not self.startPauseStatus
         if self.startPauseStatus:
             self.startPauseBtn.setText('Pause Navigation')
@@ -303,22 +323,60 @@ class gps_user_input(object):
 
     # This function is called by subscriber of gps sensor
     def readOdom(self,data):
-        lat = data.pose.pose.position.y
-        lon = data.pose.pose.position.x
+        if (abs(data.pose.pose.position.x - self.prev_lat) < 2 or abs(data.pose.pose.position.y - self.prev_lon) < 2):
+            lat = data.pose.pose.position.x
+            #print("lat" + str(lat))
+            lon = data.pose.pose.position.y
+        else:
+            lat = self.prev_lat
+            lon = self.prev_lon
+
+        #calculate heading based on gps coordinates 
         pixX,pixY = self.satMap.coord2Pixel([lat,lon])
+        prevpixX,prevpixY = self.satMap.coord2Pixel([self.prev_lat, self.prev_lon])
+        
+        run = pixX - prevpixX
+        print(run)
+        rise = pixY - prevpixY
+        print(rise)
+        #only calculate heading when the robot has moved 2 meters
+        dist = np.sqrt((self.prev_lat - lat) ** 2.0 + (self.prev_lon - lon) ** 2.0)
+        if True: #dist > 4e-5 :
+            print("enter loop1")
+            if run < 0:
+                calcHeading = -(np.pi/4.0 - math.atan2(rise, run))
+                print("loop2")
+            elif run > 0:
+                calcHeading = np.pi/4.0 - math.atan2(rise,run) 
+            elif run == 0:
+                calcHeading = np.pi/2.0
+        else:
+            calcHeading = self.prev_heading
+        print("calcHeading "+ str(calcHeading) )
+        robotHeading = calcHeading * (1 - gps_fidelity) + self.heading * gps_fidelity
+        robotHeading = self.heading
+        print("robotHeading "+ str(robotHeading))
         quat = data.pose.pose.orientation
         r = R.from_quat([quat.x,quat.y,quat.z,quat.w])
-        xVec = r.as_dcm()[:,0]
+        #xVec = r.as_dcm()[:,0]
         #robotHeading = np.mod(math.atan2(xVec[1],xVec[0])+np.pi/3.0,2*np.pi)
-        robotHeading = math.atan2(xVec[0],xVec[1])
+        #robotHeading = self.heading #math.atan2(xVec[0],xVec[1])
         if not self.robotArrow is None:
-            self.robotArrow.setStyle(angle = robotHeading*180/np.pi+np.pi/2.0)
+            self.robotArrow.setStyle(angle = robotHeading*180.0/np.pi + 90.0)
             self.robotArrow.setPos(pixX,pixY)
             self.robotArrow.update()
         self.historyPoints.append([pixX,pixY])
         self.setHistory()
+        self.prev_lat = lat
+        self.prev_lon = lon
+        self.prev_heading = robotHeading
     
-    # This function checks status of navigation controller
+    # This function updates the value of longitude and latitude information
+    def location(self, data):
+        if(data.longitude != 0.0 and data.latitude != 0.0):
+            self.longitude = data.longitude
+            self.latitude = data.latitude
+    #this function checks status of navigation controller
     def readNavigation(self,data):
         if self.startPauseStatus:
             currNavGoal = np.array([data.pose.position.y,data.pose.position.x])
@@ -341,7 +399,6 @@ class gps_user_input(object):
             msg.pose.position.y = float('nan')
             msg.pose.position.z = -1
             self.goal_pub.publish(msg)
-
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
     mw = QtWidgets.QMainWindow()

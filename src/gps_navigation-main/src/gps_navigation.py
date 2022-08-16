@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import rospy
+from microstrain_inertial_msgs.msg import FilterHeading
 from nav_msgs.msg import Odometry, Path
 from geometry_msgs.msg import Point, Quaternion, Twist, TwistStamped, PoseStamped, PointStamped, Vector3
 from sensor_msgs.msg import Imu, NavSatFix
@@ -38,10 +39,12 @@ class gps_navigation():
     
     def __init__(self):
         #init parameters needed for waypoint nav
+        rospy.init_node('gps_navigation',anonymous=True)
         self.X = 0
         self.Y = 0
         self.xdot = 0
         self.ydot = 0
+        self.vdot = 0
         self.psi = 0
         self.psidot = 0
         self.t_prev = 0 
@@ -50,15 +53,15 @@ class gps_navigation():
         self.prev = rospy.get_rostime()
         
         #init controller
-        self.controller = PIDcontroller()
+        self.controller = PIDController()
 
         self.goalPos = None # in lon lat degree
-        rospy.init_node('gps_navigation',anonymous=True)
         self.odom_sub = rospy.Subscriber('/nav/odom',Odometry,self.navigate) # do navigation when odom is published
         self.goal_sub = rospy.Subscriber('/gps_navigation/goal',PoseStamped,self.setGoal) # for setting goal
         self.cmd_pub = rospy.Publisher('/cmd_vel/managed',Twist,queue_size=5) # for publishing drive commands
         #need a subscriber to find the yaw
         self.goal_pub = rospy.Publisher('/gps_navigation/current_goal',PoseStamped,queue_size=5) # for publishing status of navigation (running/done)
+        self.heading_sub = rospy.Subscriber('nav/heading', FilterHeading, self.set_heading)
        # publish status of navigation
         rate = rospy.Rate(10)
         self.lastmsg = PoseStamped()
@@ -78,7 +81,8 @@ class gps_navigation():
             self.goal_pub.publish(msg)
             self.lastmsg = msg
             rate.sleep()
-    
+    def set_heading(self, data):
+        self.psi = data.heading_rad
     def setGoal(self,data):
         if np.isnan(data.pose.position.x) or np.isnan(data.pose.position.y):
             self.lastmsg.pose.position.x = float('nan')
@@ -95,14 +99,15 @@ class gps_navigation():
         self.Y = data.pose.pose.position.y
         self.xdot = data.twist.twist.linear.x
         self.ydot = data.twist.twist.linear.y
+        self.vdot = sqrt(abs(self.xdot)**2 + abs(self.ydot)**2)
         self.psidot = data.twist.twist.angular.z
         # calculate robot position and heading
         robotPos = np.array([data.pose.pose.position.x,data.pose.pose.position.y])
-        quat = data.pose.pose.orientation
-        r = R.from_quat([quat.x,quat.y,quat.z,quat.w])
-        xVec = r.as_dcm()[:,0]
-        robotHeading = np.mod(atan2(xVec[1],xVec[0])+np.pi/3.0,2*np.pi)
-        self.psi = robotHeading
+        #quat = data.pose.pose.orientation
+        #r = R.from_quat([quat.x,quat.y,quat.z,quat.w])
+        #xVec = r.as_dcm()[:,0]
+        #robotHeading = np.mod(atan2(xVec[1],xVec[0])+np.pi/3.0,2*np.pi)
+        #self.psi = robotHeading
         # run navigation
         relGoal = self.goalPos-robotPos
         print('----Navigating----')
@@ -114,10 +119,10 @@ class gps_navigation():
             print('----Finished Navigation----')
         goalAngle = np.mod(atan2(relGoal[1],relGoal[0]),2*np.pi)
         print('relative goal angle: %.2f degrees' %(goalAngle*180/np.pi))
-        print('robot heading angle: %.2f degrees' %(robotHeading*180/np.pi))
+        print('robot heading angle: %.2f degrees' %(self.psi*180/np.pi))
         current_time = rospy.get_rostime()
-        self.dt = current_time - self.prev
-        angle, speed = self.controller.update(self, self.goalPos, self.dt, self.X, self.Y, self.xdot, self.ydot, self.psidot)
+        self.dt = (current_time - self.prev).to_sec()
+        angle, speed = self.controller.update( self.goalPos,self.psi, self.dt, self.X, self.Y, self.xdot, self.ydot, self.psidot, self.vdot)
         cmd_msg = Twist()
         cmd_msg.linear.x = speed
         cmd_msg.angular.z = angle 
@@ -126,7 +131,7 @@ class gps_navigation():
 #to do: get the time step
 
 class PIDController():
-    def __init__(self,traj):
+    def __init__(self):
         #try to get the vehicle information
         try:
             self.lr = rospy.get_param('~lr')
@@ -147,8 +152,7 @@ class PIDController():
         self.error_dist_cum = 0
         self.error_dist_prev = 0
 
-    def update(self, goal, psi, dt, X, Y, xdot, ydot, psidot):
-        traj = self.traj
+    def update(self, goal, psi, dt, X, Y, xdot, ydot, psidot, vdot):
         lr = self.lr
         lf = self.lf
         ca = self.ca
@@ -159,35 +163,43 @@ class PIDController():
         error_angle_cum = self.error_angle_cum
         error_angle_prev = self.error_angle_prev
         # PID Tuning parameters
-        P_dist = 0.8
-        I_dist = 0.6
-        D_dist = 0.2
-        P_angle = 0.6
+        P_dist = 0.08
+        I_dist = 0.06
+        D_dist = 0.02
+        P_angle = 0.06
         I_angle = 0.6
         D_angle = 0.4
-        V_desire = 10
+        scale = 10.0
 
         #get updated states, need to be implemented
         #dt time step
-
+        print(dt)
         #Lateral Controller
         error_dist = V_desire - vdot
+        #print(error_dist)
         error_dist_cum = error_dist * dt + error_dist_cum
         error_dist_diff = (error_dist - error_dist_prev) / dt
         error_dist_prev = error_dist
         throttle = (P_dist * error_dist + I_dist * error_dist_cum + D_dist * error_dist_diff)
+        #comment out / this is constant speed
+        throttle = 6200
+        
+        #throttle should be a function of distance to the goal location
+        #throttle = min(6140 + scale*(sqrt((goal[0] - Y)**2 + (goal[1] - X)**2)), 6200)
 
         #Longitudal Controller
 
         #get the next point to go = to do
+        print(goal)
         angle_desire = np.arctan2((goal[0] - Y),(goal[1] - X))
+        print("angle_desire" + str(angle_desire) ) 
         error_angle = wrapTopi(angle_desire - psi)
 
         error_angle_cum = error_angle * dt + error_angle_cum
         error_angle_diff = (error_angle - error_angle_prev) / dt
         error_angle_prev = error_angle
-        delta = (P_angle * error_angle + I_angle * error_angle_cum + D_angle * error_angle_diff)
-
+        delta = 6000 + (P_angle * error_angle + I_angle * error_angle_cum + D_angle * error_angle_diff)
+        print("angle command: " + str(delta))
         return delta,throttle
 
 class LQRController():
@@ -228,7 +240,7 @@ class LQRController():
         I_dist = 0.6
         D_dist = 0.2
         P_angle = 0.6
-        I_angle = 0.6
+        I_angle = 0.0
         D_angle = 0.4
         V_desire = 10
 
@@ -262,7 +274,7 @@ class LQRController():
         Q = np.matrix([[0.1, 0, 0, 0],[0, 0.1, 0, 0],[0, 0, 20, 0],[0, 0, 0, 6]])
         R = np.matrix([[1,0],[0,2]])
         S = np.matrix(linalg.solve_discrete_are(A_dis, B_dis, Q, R))
-        K = np.matrix(linalg.inv(B_dis.T@S@B + R) @ (B_dis.T@))
+        K = np.matrix(linalg.inv(B_dis.T@S@B + R) @ (B_dis.T@S@A_dis))
         error_angle_cum = error_angle * dt + error_angle_cum
         error_angle_diff = (error_angle - error_angle_prev) / dt
         error_angle_prev = error_angle

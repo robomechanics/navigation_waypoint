@@ -3,7 +3,7 @@
 	
 	<!-- open python gui -->
 	<node pkg="gps_navigation" type="gps_user_input.py" name="gps_user_input" output="screen">
-		<rosparam command="load" file="$(find gps_navigation)/config/wean_lawn.yaml"/>
+		<rosparam command="load" file="$(find gps_navigation)/config/firing.yaml"/>
 	</node>
 	
 	<!-- Run navigation -->
