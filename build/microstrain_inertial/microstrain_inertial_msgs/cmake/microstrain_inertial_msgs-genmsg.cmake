@@ -64,7 +64,7 @@ add_custom_target(_microstrain_inertial_msgs_generate_messages_check_deps_${_fil
 
 get_filename_component(_filename "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestampStamped.msg" NAME_WE)
 add_custom_target(_microstrain_inertial_msgs_generate_messages_check_deps_${_filename}
-  COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "microstrain_inertial_msgs" "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestampStamped.msg" "std_msgs/Header:microstrain_inertial_msgs/GPSCorrelationTimestamp"
+  COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "microstrain_inertial_msgs" "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestampStamped.msg" "microstrain_inertial_msgs/GPSCorrelationTimestamp:std_msgs/Header"
 )
 
 get_filename_component(_filename "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/InputSpeedMeasurement.msg" NAME_WE)
@@ -209,7 +209,7 @@ add_custom_target(_microstrain_inertial_msgs_generate_messages_check_deps_${_fil
 
 get_filename_component(_filename "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/srv/GetSensor2VehicleTransformation.srv" NAME_WE)
 add_custom_target(_microstrain_inertial_msgs_generate_messages_check_deps_${_filename}
-  COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "microstrain_inertial_msgs" "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/srv/GetSensor2VehicleTransformation.srv" "geometry_msgs/Quaternion:geometry_msgs/Vector3"
+  COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "microstrain_inertial_msgs" "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/srv/GetSensor2VehicleTransformation.srv" "geometry_msgs/Vector3:geometry_msgs/Quaternion"
 )
 
 get_filename_component(_filename "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/srv/GetSoftIronMatrix.srv" NAME_WE)
@@ -435,7 +435,7 @@ _generate_msg_cpp(microstrain_inertial_msgs
 _generate_msg_cpp(microstrain_inertial_msgs
   "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestampStamped.msg"
   "${MSG_I_FLAGS}"
-  "/opt/ros/noetic/share/std_msgs/cmake/../msg/Header.msg;/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestamp.msg"
+  "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestamp.msg;/opt/ros/noetic/share/std_msgs/cmake/../msg/Header.msg"
   ${CATKIN_DEVEL_PREFIX}/${gencpp_INSTALL_DIR}/microstrain_inertial_msgs
 )
 _generate_msg_cpp(microstrain_inertial_msgs
@@ -611,7 +611,7 @@ _generate_srv_cpp(microstrain_inertial_msgs
 _generate_srv_cpp(microstrain_inertial_msgs
   "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/srv/GetSensor2VehicleTransformation.srv"
   "${MSG_I_FLAGS}"
-  "/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Quaternion.msg;/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Vector3.msg"
+  "/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Vector3.msg;/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Quaternion.msg"
   ${CATKIN_DEVEL_PREFIX}/${gencpp_INSTALL_DIR}/microstrain_inertial_msgs
 )
 _generate_srv_cpp(microstrain_inertial_msgs
@@ -1028,7 +1028,7 @@ _generate_msg_eus(microstrain_inertial_msgs
 _generate_msg_eus(microstrain_inertial_msgs
   "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestampStamped.msg"
   "${MSG_I_FLAGS}"
-  "/opt/ros/noetic/share/std_msgs/cmake/../msg/Header.msg;/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestamp.msg"
+  "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestamp.msg;/opt/ros/noetic/share/std_msgs/cmake/../msg/Header.msg"
   ${CATKIN_DEVEL_PREFIX}/${geneus_INSTALL_DIR}/microstrain_inertial_msgs
 )
 _generate_msg_eus(microstrain_inertial_msgs
@@ -1204,7 +1204,7 @@ _generate_srv_eus(microstrain_inertial_msgs
 _generate_srv_eus(microstrain_inertial_msgs
   "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/srv/GetSensor2VehicleTransformation.srv"
   "${MSG_I_FLAGS}"
-  "/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Quaternion.msg;/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Vector3.msg"
+  "/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Vector3.msg;/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Quaternion.msg"
   ${CATKIN_DEVEL_PREFIX}/${geneus_INSTALL_DIR}/microstrain_inertial_msgs
 )
 _generate_srv_eus(microstrain_inertial_msgs
@@ -1621,7 +1621,7 @@ _generate_msg_lisp(microstrain_inertial_msgs
 _generate_msg_lisp(microstrain_inertial_msgs
   "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestampStamped.msg"
   "${MSG_I_FLAGS}"
-  "/opt/ros/noetic/share/std_msgs/cmake/../msg/Header.msg;/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestamp.msg"
+  "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestamp.msg;/opt/ros/noetic/share/std_msgs/cmake/../msg/Header.msg"
   ${CATKIN_DEVEL_PREFIX}/${genlisp_INSTALL_DIR}/microstrain_inertial_msgs
 )
 _generate_msg_lisp(microstrain_inertial_msgs
@@ -1797,7 +1797,7 @@ _generate_srv_lisp(microstrain_inertial_msgs
 _generate_srv_lisp(microstrain_inertial_msgs
   "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/srv/GetSensor2VehicleTransformation.srv"
   "${MSG_I_FLAGS}"
-  "/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Quaternion.msg;/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Vector3.msg"
+  "/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Vector3.msg;/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Quaternion.msg"
   ${CATKIN_DEVEL_PREFIX}/${genlisp_INSTALL_DIR}/microstrain_inertial_msgs
 )
 _generate_srv_lisp(microstrain_inertial_msgs
@@ -2214,7 +2214,7 @@ _generate_msg_nodejs(microstrain_inertial_msgs
 _generate_msg_nodejs(microstrain_inertial_msgs
   "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestampStamped.msg"
   "${MSG_I_FLAGS}"
-  "/opt/ros/noetic/share/std_msgs/cmake/../msg/Header.msg;/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestamp.msg"
+  "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestamp.msg;/opt/ros/noetic/share/std_msgs/cmake/../msg/Header.msg"
   ${CATKIN_DEVEL_PREFIX}/${gennodejs_INSTALL_DIR}/microstrain_inertial_msgs
 )
 _generate_msg_nodejs(microstrain_inertial_msgs
@@ -2390,7 +2390,7 @@ _generate_srv_nodejs(microstrain_inertial_msgs
 _generate_srv_nodejs(microstrain_inertial_msgs
   "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/srv/GetSensor2VehicleTransformation.srv"
   "${MSG_I_FLAGS}"
-  "/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Quaternion.msg;/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Vector3.msg"
+  "/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Vector3.msg;/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Quaternion.msg"
   ${CATKIN_DEVEL_PREFIX}/${gennodejs_INSTALL_DIR}/microstrain_inertial_msgs
 )
 _generate_srv_nodejs(microstrain_inertial_msgs
@@ -2807,7 +2807,7 @@ _generate_msg_py(microstrain_inertial_msgs
 _generate_msg_py(microstrain_inertial_msgs
   "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestampStamped.msg"
   "${MSG_I_FLAGS}"
-  "/opt/ros/noetic/share/std_msgs/cmake/../msg/Header.msg;/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestamp.msg"
+  "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/msg/GPSCorrelationTimestamp.msg;/opt/ros/noetic/share/std_msgs/cmake/../msg/Header.msg"
   ${CATKIN_DEVEL_PREFIX}/${genpy_INSTALL_DIR}/microstrain_inertial_msgs
 )
 _generate_msg_py(microstrain_inertial_msgs
@@ -2983,7 +2983,7 @@ _generate_srv_py(microstrain_inertial_msgs
 _generate_srv_py(microstrain_inertial_msgs
   "/home/cvx/catkin_ws/src/microstrain_inertial/microstrain_inertial_msgs/microstrain_inertial_msgs_common/srv/GetSensor2VehicleTransformation.srv"
   "${MSG_I_FLAGS}"
-  "/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Quaternion.msg;/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Vector3.msg"
+  "/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Vector3.msg;/opt/ros/noetic/share/geometry_msgs/cmake/../msg/Quaternion.msg"
   ${CATKIN_DEVEL_PREFIX}/${genpy_INSTALL_DIR}/microstrain_inertial_msgs
 )
 _generate_srv_py(microstrain_inertial_msgs

@@ -14,8 +14,11 @@ from nav_msgs.msg import Odometry, Path
 from geometry_msgs.msg import Point, Quaternion, Twist, TwistStamped, PoseStamped, PointStamped, Vector3
 import pandas as pd
 import csv
+from std_msgs.msg import String
 from sensor_msgs.msg import NavSatFix
 from microstrain_inertial_msgs.msg import FilterHeading
+sys.path.insert(0,"/home/cvx/catkin_ws/src/pxrf/scripts")
+from plot import generate_plot
 #testing
 lat_set = 40.440980
 lon_set = -79.946319
@@ -40,6 +43,7 @@ def num2deg(xtile, ytile, zoom):
 class satelliteImage(object):
     def __init__(self,coord=(0,0),dim=(0,0),zoom=0,loadFile=None):
         if loadFile is None:
+            print("downloading satellite images")
             self.downloadAllTiles(coord,dim,zoom)
     def downloadAllTiles(self,coord,dim,zoom):
         x,y = deg2num(coord[0],coord[1],zoom)
@@ -118,7 +122,9 @@ class gps_user_input(object):
             height = height_set
             width = width_set
             zoom = zoom_set
-
+        #pxrf control
+        self.pxrfRunning = False
+        #get the map
         self.satMap = satelliteImage(coord=(lat,lon),dim=(width,height),zoom=zoom)
         # init widget
         self.widget = pg.LayoutWidget()
@@ -175,9 +181,40 @@ class gps_user_input(object):
         nextGoalBtn = QtWidgets.QPushButton('Next Goal')
         nextGoalBtn.clicked.connect(nextGoal)
         
+        #second row of buttons
+        self.boundaryBtn = QtWidgets.QPushButton('Draw Boundary')
+        self.boundaryStatus = False
+        self.boundaryBtn.clicked.connect(self.draw_boundary)
+        self.bdBtn = QtWidgets.QPushButton('Boustrophedon')
+        self.bdStatus = False
+        self.bdBtn.clicked.connect(self.boustrophedon)
+        self.adaptiveBtn = QtWidgets.QPushButton('Adaptive')
+        self.adaptiveStatus = False
+        self.adaptiveBtn.clicked.connect(self.adaptive)
+        self.widget.addWidget(self.boundaryBtn, row = 3, col = 0, colspan = 1)
+        self.widget.addWidget(self.bdBtn, row = 3, col = 1, colspan = 1)
+        self.widget.addWidget(self.adaptiveBtn, row = 3, col = 2, colspan = 1)
+        self.stopBtn = QtWidgets.QPushButton('STOP')
+        self.stopStatus = False
+        self.stopBtn.clicked.connect(self.stop)
+        self.widget.addWidget(self.stopBtn, row = 3, col = 6, colspan = 2)
+        self.pxrfBtn = QtWidgets.QPushButton('Sample')
+        self.pxrfStatus = False
+        self.pxrfBtn.clicked.connect(self.pxrf)
+        self.widget.addWidget(self.pxrfBtn, row = 3, col = 3, colspan = 1)
         #text widget
-        self.statusNav = "Normal"
-        self.statusGPS = "Connecting to GPS"
+
+        self.statusGPS = QtWidgets.QLineEdit()
+        self.statusGPS.setText('GPS Connecting')
+        self.statusGPS.setReadOnly(True)
+        
+        self.statusNav = QtWidgets.QLineEdit()
+        self.statusNav.setText('Manual Mode')
+        self.statusNav.setReadOnly(True)
+        
+        self.statusPxrf = QtWidgets.QLineEdit()
+        self.statusPxrf.setText('Ready to collect')
+        self.statusPxrf.setReadOnly(True)
         #self.status = pg.TextItem('')
         #self.status.setColor(pg.Qt.QtGui.QColor("red"))
         #self.status.setText("testing")
@@ -190,22 +227,41 @@ class gps_user_input(object):
         self.widget.addWidget(self.startPauseBtn,row=2,col=4)
         self.widget.addWidget(prevGoalBtn,row=2,col=6)
         self.widget.addWidget(nextGoalBtn,row=2,col=7)
-        self.widget.addLabel(text = "Status: "+ self.statusNav, row = 1, col = 0, colspan = 3 )
-        self.widget.addLabel(text = "GPS: " + self.statusGPS, row = 1, col = 4, colspan = 2 )
-
+        self.widget.addWidget(self.statusGPS, row = 1, col = 0, colspan = 4)
+        self.widget.addWidget(self.statusNav, row = 1, col = 5, colspan = 1)
+        self.widget.addWidget(self.statusPxrf, row = 1, col = 6, colspan = 2)
+        #self.widget.addLabel(text = "Mode: "+ self.statusNav, row = 1, col = 0, colspan = 2 )
+        #self.widget.addLabel(text = "GPS: " + self.statusGPS, row = 1, col = 3, colspan = 2 )
+        #self.widget.addLabel(text = "PXRF status: " + self.statusPxrf,  row = 1,  col = 5, colspan = 2)
+        
         # ros sub pub
         self.odom_sub = rospy.Subscriber('/nav/odom',Odometry,self.readOdom) # plotRobotPosition
         self.navigation_sub = rospy.Subscriber('/gps_navigation/current_goal',PoseStamped,self.readNavigation) # get status of navigation controller
         self.goal_pub = rospy.Publisher('/gps_navigation/goal',PoseStamped,queue_size=5)
         self.location_sub = rospy.Subscriber('/nav/gnss1/fix', NavSatFix, self.location)
         self.set_heading = rospy.Subscriber('/nav/heading', FilterHeading, self.set_heading)
-    def set_heading(self, data):
-        if abs(self.prev_heading - self.heading) < 0.5:
-            self.heading = data.heading_rad
-        else:
-            self.heading = self.prev_heading
+        self.pubCTRL = rospy.Publisher('pxrf_gui', String, queue_size = 2)
+        self.subCTRL = rospy.Subscriber('pxrf_response', String, self.pxrfListener)
+    
 
-        self.prev_heading = self. heading
+    def pxrfListener(self, msg):
+        if  msg.data == "201":
+            self.pxrfRunning = False
+            self.pxrfBtn.setText('Ready to collect')
+
+
+
+    #This function sets the heading of the robot
+    def set_heading(self, data):
+        #if abs(self.prev_heading - self.heading) < 0.5:
+        #    self.heading = data.heading_rad
+        #else:
+        #    self.heading = self.prev_heading
+        if(data.heading_rad == 0 and data.heading_deg == 0):
+            return
+        self.heading = data.heading_rad 
+
+        #self.prev_heading = self. heading
         # This function adds points to roi (when user is editing path)
     def addROIPoint(self,point):
         if self.editPathMode:
@@ -334,28 +390,28 @@ class gps_user_input(object):
         #calculate heading based on gps coordinates 
         pixX,pixY = self.satMap.coord2Pixel([lat,lon])
         prevpixX,prevpixY = self.satMap.coord2Pixel([self.prev_lat, self.prev_lon])
-        
-        run = pixX - prevpixX
-        print(run)
-        rise = pixY - prevpixY
-        print(rise)
-        #only calculate heading when the robot has moved 2 meters
-        dist = np.sqrt((self.prev_lat - lat) ** 2.0 + (self.prev_lon - lon) ** 2.0)
-        if True: #dist > 4e-5 :
-            print("enter loop1")
-            if run < 0:
-                calcHeading = -(np.pi/4.0 - math.atan2(rise, run))
-                print("loop2")
-            elif run > 0:
-                calcHeading = np.pi/4.0 - math.atan2(rise,run) 
-            elif run == 0:
-                calcHeading = np.pi/2.0
-        else:
-            calcHeading = self.prev_heading
-        print("calcHeading "+ str(calcHeading) )
-        robotHeading = calcHeading * (1 - gps_fidelity) + self.heading * gps_fidelity
+        #
+        #run = pixX - prevpixX
+        ##print(run)
+        #rise = pixY - prevpixY
+        ##print(rise)
+        ##only calculate heading when the robot has moved 2 meters
+        #dist = np.sqrt((self.prev_lat - lat) ** 2.0 + (self.prev_lon - lon) ** 2.0)
+        #if True: #dist > 4e-5 :
+        #    #print("enter loop1")
+        #    if run < 0:
+        #        calcHeading = -(np.pi/4.0 - math.atan2(rise, run))
+        #        print("loop2")
+        #    elif run > 0:
+        #        calcHeading = np.pi/4.0 - math.atan2(rise,run) 
+        #    elif run == 0:
+        #        calcHeading = np.pi/2.0
+        #else:
+        #    calcHeading = self.prev_heading
+        ##print("calcHeading "+ str(calcHeading) )
+        #robotHeading = calcHeading * (1 - gps_fidelity) + self.heading * gps_fidelity
         robotHeading = self.heading
-        print("robotHeading "+ str(robotHeading))
+        #print("robotHeading "+ str(robotHeading))
         quat = data.pose.pose.orientation
         r = R.from_quat([quat.x,quat.y,quat.z,quat.w])
         #xVec = r.as_dcm()[:,0]
@@ -376,6 +432,9 @@ class gps_user_input(object):
         if(data.longitude != 0.0 and data.latitude != 0.0):
             self.longitude = data.longitude
             self.latitude = data.latitude
+            self.statusGPS.setText("lon: " + str(round(self.longitude,4)) + " " +"lat: " + str(round(self.latitude, 4)) )
+        else:
+            self.statusGPS.setText("GPS connecting")
     #this function checks status of navigation controller
     def readNavigation(self,data):
         if self.startPauseStatus:
@@ -399,6 +458,16 @@ class gps_user_input(object):
             msg.pose.position.y = float('nan')
             msg.pose.position.z = -1
             self.goal_pub.publish(msg)
+    def boustrophedon(self):
+        return
+    def draw_boundary(self):
+        return
+    def adaptive(self):
+        return
+    def stop(self):
+        return
+    def pxrf(self):
+        return
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
     mw = QtWidgets.QMainWindow()
