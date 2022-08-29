@@ -19,13 +19,17 @@ from sensor_msgs.msg import NavSatFix
 from microstrain_inertial_msgs.msg import FilterHeading
 sys.path.insert(0,"/home/cvx/catkin_ws/src/pxrf/scripts")
 from plot import generate_plot
+from gps_user_location import read_location
 #testing
-lat_set = 40.440980
-lon_set = -79.946319
-zoom_set = 20
-width_set = 5
-height_set = 5
-gps_fidelity = 1.0
+lat_set = 0
+lon_set = 0
+zoom_set = 0
+width_set = 0
+height_set = 0
+#gps_fidelity = 1.0
+
+
+
 def deg2num(lat_deg, lon_deg, zoom):
     lat_rad = math.radians(lat_deg)
     n = 2.0 ** zoom
@@ -108,22 +112,27 @@ class gps_user_input(object):
         rospy.init_node('gps_user_input',anonymous=True)
         # load map
         try:
-            lat = rospy.get_param('~lat')
-            lon = rospy.get_param('~lon')
-            self.prev_lat = lat
-            self.prev_lon = lon
-            height = rospy.get_param('~height')
-            width = rospy.get_param('~width')
-            zoom = rospy.get_param('~zoom')
+           # lat = rospy.get_param('~lat')
+           # lon = rospy.get_param('~lon')
+           # self.prev_lat = lat
+           # self.prev_lon = lon
+           # height = rospy.get_param('~height')
+           # width = rospy.get_param('~width')
+           # zoom = rospy.get_param('~zoom')
+           self.prev_lat = lat_set
+           self.prev_lon = lon_set
+           height = height_set
+           width = width_set
+           zoom = zoom_set
         except:
-            print("couldn't find yaml file. load parameters from the python file")
-            lat = lat_set
-            lon = lon_set
-            height = height_set
-            width = width_set
-            zoom = zoom_set
+            print("we can't load that location")
+            QtWidgets.QApplication.instance().exec_()    
         #pxrf control
         self.pxrfRunning = False
+        
+        #speed display
+        self.highSpeed = True
+
         #get the map
         self.satMap = satelliteImage(coord=(lat,lon),dim=(width,height),zoom=zoom)
         # init widget
@@ -194,8 +203,9 @@ class gps_user_input(object):
         self.widget.addWidget(self.boundaryBtn, row = 3, col = 0, colspan = 1)
         self.widget.addWidget(self.bdBtn, row = 3, col = 1, colspan = 1)
         self.widget.addWidget(self.adaptiveBtn, row = 3, col = 2, colspan = 1)
-        self.stopBtn = QtWidgets.QPushButton('STOP')
+        self.stopBtn = QtWidgets.QPushButton('STOP ROBOT')
         self.stopStatus = False
+        self.stopBtn.setStyleSheet("background-color : red")
         self.stopBtn.clicked.connect(self.stop)
         self.widget.addWidget(self.stopBtn, row = 3, col = 6, colspan = 2)
         self.pxrfBtn = QtWidgets.QPushButton('Sample')
@@ -215,6 +225,11 @@ class gps_user_input(object):
         self.statusPxrf = QtWidgets.QLineEdit()
         self.statusPxrf.setText('Ready to collect')
         self.statusPxrf.setReadOnly(True)
+       
+        self.statusSpeed = QtWidgets.QLineEdit()
+        self.statusSpeed.setText('High Speed')
+        self.statusSpeed.setReadOnly(True)
+
         #self.status = pg.TextItem('')
         #self.status.setColor(pg.Qt.QtGui.QColor("red"))
         #self.status.setText("testing")
@@ -224,12 +239,13 @@ class gps_user_input(object):
         self.widget.addWidget(self.editPathBtn,row=2,col=2)
         self.widget.addWidget(loadPathFileBtn,row=2,col=3)
         self.widget.addWidget(savePathBtn,row=2,col=4)
-        self.widget.addWidget(self.startPauseBtn,row=2,col=4)
+        self.widget.addWidget(self.startPauseBtn,row=2,col=5, colspan = 1)
         self.widget.addWidget(prevGoalBtn,row=2,col=6)
         self.widget.addWidget(nextGoalBtn,row=2,col=7)
-        self.widget.addWidget(self.statusGPS, row = 1, col = 0, colspan = 4)
+        self.widget.addWidget(self.statusGPS, row = 1, col = 0, colspan = 5)
         self.widget.addWidget(self.statusNav, row = 1, col = 5, colspan = 1)
-        self.widget.addWidget(self.statusPxrf, row = 1, col = 6, colspan = 2)
+        self.widget.addWidget(self.statusSpeed, row = 1, col = 6, colspan = 1)
+        self.widget.addWidget(self.statusPxrf, row = 1, col = 7, colspan = 1)
         #self.widget.addLabel(text = "Mode: "+ self.statusNav, row = 1, col = 0, colspan = 2 )
         #self.widget.addLabel(text = "GPS: " + self.statusGPS, row = 1, col = 3, colspan = 2 )
         #self.widget.addLabel(text = "PXRF status: " + self.statusPxrf,  row = 1,  col = 5, colspan = 2)
@@ -242,13 +258,24 @@ class gps_user_input(object):
         self.set_heading = rospy.Subscriber('/nav/heading', FilterHeading, self.set_heading)
         self.pubCTRL = rospy.Publisher('pxrf_gui', String, queue_size = 2)
         self.subCTRL = rospy.Subscriber('pxrf_response', String, self.pxrfListener)
+        self.speedRead = rospy.Subscriber('/motor_controller/command', Twist, self.speedListener)
+        self.stopCommand = rospy.Publisher('/cmd_vel/managed', Twist, queue_size = 5)
     
+    def speedListener(self, msg):
+        if msg.angular.x == 1:
+            self.highSpeed = True
+            self.statusSpeed.setText("High Speed")
+        elif msg.angular.x == -1:
+            self.highSpeed = False
+            self.statusSpeed.setText("Low Speed")
+
 
     def pxrfListener(self, msg):
         if  msg.data == "201":
             self.pxrfRunning = False
             self.pxrfBtn.setText('Ready to collect')
-
+            self.pxrfStatus = False
+            generate_plot()
 
 
     #This function sets the heading of the robot
@@ -438,6 +465,7 @@ class gps_user_input(object):
     #this function checks status of navigation controller
     def readNavigation(self,data):
         if self.startPauseStatus:
+            self.statusNav.setText("Automatic navigation")
             currNavGoal = np.array([data.pose.position.y,data.pose.position.x])
             desNavGoal = np.array(self.pathGPS[self.pathIndex][0:2])
             onCurrentGoal = np.linalg.norm(desNavGoal-currNavGoal) < 1e-4
@@ -453,6 +481,7 @@ class gps_user_input(object):
                 self.goal_pub.publish(msg)
         else:
             # stop the navigation
+            self.statusNav.setText("Manual")
             msg = PoseStamped()
             msg.pose.position.x = float('nan')
             msg.pose.position.y = float('nan')
@@ -465,10 +494,34 @@ class gps_user_input(object):
     def adaptive(self):
         return
     def stop(self):
+        self.startPauseStatus = 0
+        command = Twist()
+        command.linear.x = 0
+        command.linear.y = 0
+        command.linear.z = 0
+        command.angular.x = 0
+        command.angular.y = 0
+        command.angular.z = 0
+        self.stopCommand.publish(command)
         return
     def pxrf(self):
+        if not self.pxrfStatus:
+            self.statusPxrf.setText("Collecting")
+            self.pxrfRunning = True
+            self.pxrfBtn.setText("STOP pxrf")
+            self.pubCTRL.publish("start")
+            self.pxrfStatus = True
+        else:
+            self.statusPxrf.setText("Ready to collect")
+            self.pxrfRunning = False
+            self.pxrfBtn.setText("Sample")
+            self.pubCTRL.publish("stop")
+            self.pxrfStatus = False
         return
 if __name__ == '__main__':
+    location_input = read_location()
+    lat_set, lon_set, zoom_set, width_set, height_set = location_input[1:6]
+    print([lat_set, lon_set, zoom_set, width_set, height_set])
     app = QtWidgets.QApplication([])
     mw = QtWidgets.QMainWindow()
     gps_node = gps_user_input()

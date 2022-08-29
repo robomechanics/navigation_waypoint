@@ -11,31 +11,11 @@ from scipy import signal, linalg
 import numpy as np
 from sklearn import preprocessing
 
+#constrain the angle to be within pi
 def wrapTopi(angle):
     return (angle + np.pi) % (2 * np.pi) - np.pi
 
-def get_traj(filename):
-    with open(filename) as f:
-        lines = f.readlines()
-        traj = np.zeros((len(lines),2))
-        for idx, line in enumerate(lines):
-            pos = line.split(",")
-            traj[idx,0] = pos[0]
-            traj[idx,1] = pos[1]
-    return traj
-        
-def next_node(X,Y,traj):
-    current = np.array([X,Y])
-    traj = np.asarray(traj)
-    dist = point - traj
-    squared = np.sum(dist ** 2, axis = 1)
-    minIndex = np.argmin(squared)
-    return traj[minIndex]
-
-#The output should be normalized
-
-
-
+#Main function to control the robot using a PID controller
 class gps_navigation():
     
     def __init__(self):
@@ -82,10 +62,13 @@ class gps_navigation():
             self.goal_pub.publish(msg)
             self.lastmsg = msg
             rate.sleep()
+    #set the heading of the robot
     def set_heading(self, data):
         if(data.heading_rad == 0 and data.heading_deg == 0):
             return
         self.psi = data.heading_rad
+
+    #set the goal of x and y
     def setGoal(self,data):
         if np.isnan(data.pose.position.x) or np.isnan(data.pose.position.y):
             self.lastmsg.pose.position.x = float('nan')
@@ -94,7 +77,7 @@ class gps_navigation():
             self.goalPos = None
         else:
             self.goalPos = np.array([data.pose.position.y,data.pose.position.x])
-
+    #main function to compute the outputs and drive the robot
     def navigate(self,data):
 
         if (data.pose.pose.position.x != 0 or data.pose.pose.position.y != 0):   
@@ -108,6 +91,7 @@ class gps_navigation():
             cmd_msg_reset = Twist()
             self.cmd_pub.publish(cmd_msg_reset)
             return
+
         # calculate robot position and heading
         robotPos = np.array([data.pose.pose.position.x,data.pose.pose.position.y])
         #quat = data.pose.pose.orientation
@@ -121,6 +105,8 @@ class gps_navigation():
         #print('relative goal: '+ str(relGoal))
         #relGoal[1] = relGoal[1]*np.cos(robotPos[0]*np.pi/180)
         #print('relative goal scaled: ' +str(relGoal))
+        
+        #define tolerance
         if np.linalg.norm(relGoal)<1e-5:
             self.goalPos=None
             print('----Finished Navigation----')
@@ -135,11 +121,11 @@ class gps_navigation():
         cmd_msg.angular.z = angle 
         self.cmd_pub.publish(cmd_msg)
         self.prev = current_time
-#to do: get the time step
 
+#PID controller class
 class PIDController():
     def __init__(self):
-        #try to get the vehicle information
+        #try to get the vehicle information, if no file is found then load the default parameters. Note these parameters are only used for LQR 
         try:
             self.lr = rospy.get_param('~lr')
             self.lf = rospy.get_param('~lf')
@@ -159,6 +145,7 @@ class PIDController():
         self.error_dist_cum = 0
         self.error_dist_prev = 0
 
+    #update the motor output and angle
     def update(self, goal, psi, dt, X, Y, xdot, ydot, psidot, vdot):
         if goal.all() == None:
             return
@@ -171,6 +158,7 @@ class PIDController():
         error_dist_prev = self.error_dist_prev
         error_angle_cum = self.error_angle_cum
         error_angle_prev = self.error_angle_prev
+        
         # PID Tuning parameters
         P_dist = 0.08
         I_dist = 0.06
@@ -225,7 +213,7 @@ class PIDController():
         print("Throttle command: " + str(throttle))
         return -delta,throttle #reverse the direction of the angle controller
 
-#currently, LQR controller is not used. But it could be used to improve the performance of the robot.
+#currently, LQR controller is not used due to some tuning issues but the infrastructure is developed for the future use.
 class LQRController():
     def __init__(self,traj):
         #try to get the vehicle information
