@@ -3,6 +3,7 @@ The gps_navigation package contains the source code for waypoint navigation and 
 To launch: please launch navigate_no_rviz.launch
 
 The following files in the src are used:
+
 	gps_user_location.py:
 It both parses the locations.csv to extract the coordinate information. It can also take the input from the user and store the coordinate in the locations.csv file so that it can be easily accessed in the future
 
